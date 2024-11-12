@@ -1,0 +1,1 @@
+Pierwsze %d znaków tekst1 jest mniejsze od tekst2
