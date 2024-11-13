@@ -138,6 +138,7 @@ int main() {
         printf("Błąd alokacji pamięci dla tekstu 1.\n");
         free(tekst1_raw);
         free(tekst2_raw);
+        free(tekst1);
         return 1;
     }
     char* tekst2 = make_polish(tekst2_raw);
@@ -145,10 +146,9 @@ int main() {
         printf("Błąd alokacji pamięci dla tekstu 2.\n");
         free(tekst1_raw);
         free(tekst2_raw);
-        free(tekst1);
+        free(tekst2);
         return 1;
     }
-    printf("%s", tekst2);
 
     free(tekst1_raw);
     free(tekst2_raw);
