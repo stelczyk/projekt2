@@ -75,13 +75,13 @@ char* wczytaj_plik(const char* nazwa_pliku, int* dlugosc) {
 
     int indeks = 0;
     char linia[1024];
+    int ilosc_znakow = 0;
     while (fgets(linia, sizeof(linia), plik)) {
         int dlugosc_linii = strlen(linia);
-
-        
-        if (indeks + dlugosc_linii >= rozmiar) {
-            rozmiar *= 2;
-            char* nowy_tekst = realloc(tekst, rozmiar * sizeof(char));
+                
+        if (indeks + dlugosc_linii != rozmiar) {
+            
+            char* nowy_tekst = realloc(tekst, (dlugosc_linii+1) * sizeof(char));
             if (nowy_tekst == NULL) {
                 printf("Nie udało się rozszerzyć pamięci\n");
                 free(tekst);
@@ -90,6 +90,7 @@ char* wczytaj_plik(const char* nazwa_pliku, int* dlugosc) {
             }
             tekst = nowy_tekst;
         }
+     
 
         
         strncpy(tekst + indeks, linia, dlugosc_linii);
@@ -236,4 +237,3 @@ int main() {
 
     return 0;
 }
-
