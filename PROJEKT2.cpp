@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 #pragma warning(disable:4996)
 
 
@@ -56,50 +59,26 @@ char* make_polish(const char* sentence)
     return sentence_pl;
 }
 
-
-
 char* wczytaj_plik(const char* nazwa_pliku, int* dlugosc) {
-    FILE* plik = fopen(nazwa_pliku, "r");
-    if (plik == NULL) {
+    int plik = open(nazwa_pliku, O_RDONLY);
+    if (plik == -1) {
         printf("Nie można otworzyć pliku: %s\n", nazwa_pliku);
         return NULL;
     }
 
-    int rozmiar = 1024;
-    char* tekst = (char*)malloc(rozmiar * sizeof(char));
+	struct stat stat_plik;
+	fstat(plik, &stat_plik);
+	int plik_size = stat_plik.st_size;
+
+    char* tekst = (char*)calloc(plik_size, sizeof(char));
     if (tekst == NULL) {
         printf("Nie udało się zaalokować pamięci\n");
-        fclose(plik);
+        close(plik);
         return NULL;
     }
 
-    int indeks = 0;
-    char linia[1024];
-    int ilosc_znakow = 0;
-    while (fgets(linia, sizeof(linia), plik)) {
-        int dlugosc_linii = strlen(linia);
-                
-        if (indeks + dlugosc_linii != rozmiar) {
-            
-            char* nowy_tekst = realloc(tekst, (dlugosc_linii+1) * sizeof(char));
-            if (nowy_tekst == NULL) {
-                printf("Nie udało się rozszerzyć pamięci\n");
-                free(tekst);
-                fclose(plik);
-                return NULL;
-            }
-            tekst = nowy_tekst;
-        }
-     
+	read(plik, tekst, plik_size);
 
-        
-        strncpy(tekst + indeks, linia, dlugosc_linii);
-        indeks += dlugosc_linii;
-    }
-    tekst[indeks] = '\0';  
-
-    *dlugosc = indeks;
-    fclose(plik);
     return tekst;
 }
 int compare_words(char* w1, char* w2) {
