@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -73,10 +74,11 @@ char* wczytaj_plik(const char* nazwa_pliku, int* dlugosc) {
     }
 
     int indeks = 0;
-    char linia[256];
+    char linia[1024];
     while (fgets(linia, sizeof(linia), plik)) {
         int dlugosc_linii = strlen(linia);
 
+        
         if (indeks + dlugosc_linii >= rozmiar) {
             rozmiar *= 2;
             char* nowy_tekst = realloc(tekst, rozmiar * sizeof(char));
@@ -88,18 +90,67 @@ char* wczytaj_plik(const char* nazwa_pliku, int* dlugosc) {
             }
             tekst = nowy_tekst;
         }
-        strcpy(tekst + indeks, linia);
+
+        
+        strncpy(tekst + indeks, linia, dlugosc_linii);
         indeks += dlugosc_linii;
     }
-    tekst[indeks] = '\0';
-    *dlugosc = indeks;
+    tekst[indeks] = '\0';  
 
+    *dlugosc = indeks;
     fclose(plik);
     return tekst;
 }
+int compare_words(char* w1, char* w2) {
+    // 1. Jeżeli mamy ascii od 32 do 64 i od 91 do 96 i od 123 do 255 oraz <0  ma być na końcu
+    // 2. Sprawdzić czy mam do czynienia z 2 dużymi jednym malym i duzym czy 2 malymi
+    //
+    // Jeżeli maly - duzy == 32 to sa tej samej klasy duzy > maly
+    // Jezeli maly - duzy > 32 to duzy > maly
+    // jezeli maly - duzy < 32 to maly > duzy
 
+    char c1 = w1[0]; // "points" to the characters in w1
+    char c2 = w2[0]; // the same but to w2
+
+    int w1_len = strlen(w1);
+    int w2_len = strlen(w2);
+
+    int i = 1;
+    while (c1 != 0 && c2 != 0) {
+        if ((c1 >= 65 && c1 <= 90) && (c2 >= 97 && c2 <= 122)) {
+            // c1 upper and c2 lower
+            if (c2 - c1 >= 32) return 1; // 120 - 80 = 40 => w1 > w2
+            if (c2 - c1 != 0) return -1;
+        }
+        else if ((c2 >= 65 && c2 <= 90) && (c1 >= 97 && c1 <= 122)) {
+            // c1 lower and c2 upper
+            if (c1 - c2 >= 32) return -1;
+            if (c1 - c2 != 0) return 1;
+        }
+        else if ((c1 >= 65 && c1 <= 90) && (c2 >= 65 && c2 <= 90)) {
+            if (c1 != c2) return c1 - c2 < 0 ? 1 : -1; // both upper
+        }
+        else if ((c1 >= 97 && c1 <= 122) && (c2 >= 97 && c2 <= 122)) {
+            if (c1 != c2) return c1 - c2 < 0 ? 1 : -1; // both lower
+        }
+        else {
+            if ((c1 >= 65 && c1 <= 90) || (c1 >= 97 && c1 <= 122)) return 1;  // c1 normal c2 weid
+            if ((c2 >= 65 && c2 <= 90) || (c2 >= 97 && c2 <= 122)) return -1; // c1 weird c2 normal
+
+            // c1 i c2 sa weird
+            if (c1 != c2) return c1 - c2 < 0 ? 1 : -1;
+        }
+
+        c1 = w1[i];
+        c2 = w2[i];
+        i++;
+    }
+
+    return (w1_len == w2_len) ? 0 : (w1_len > w2_len) ? 1 : -1;
+}
 
 int porownaj_tekst(const char* tekst1, const char* tekst2, int n) {
+
 
     return strncmp(tekst1, tekst2, n);
 }
@@ -119,7 +170,10 @@ int main() {
     const char* plik1 = "plik1.txt";
     const char* plik2 = "plik2.txt";
     const char* plik_wynikowy = "wynik.txt";
-    int n = 10;
+    int n;
+
+    printf("Podaj liczbe n: ");
+    scanf("%d", &n);
 
     int dlugosc1, dlugosc2;
 
@@ -152,29 +206,34 @@ int main() {
 
     free(tekst1_raw);
     free(tekst2_raw);
-
-    int wynik = porownaj_tekst(tekst1, tekst2, n);
+    int wynik = 0;
+    for (int i = 0; i < n; i++) {
+        if (compare_words(tekst1, tekst2) > 0) wynik = 1;
+        else if (compare_words(tekst1, tekst2) < 0) wynik = -1;
+    }
+    
 
     char wynik_tekst[256];
     if (wynik == 0) {
-        snprintf(wynik_tekst, sizeof(wynik_tekst), "Pierwsze %d znaków tekstów jest identyczne\n", n);
+        snprintf(wynik_tekst, sizeof(wynik_tekst), "Pierwsze %d znakow tekstów jest identyczne\n", n);
     }
     else if (wynik > 0) {
-        snprintf(wynik_tekst, sizeof(wynik_tekst), "Pierwsze %d znaków tekst1 jest większe od tekst2\n", n);
+        snprintf(wynik_tekst, sizeof(wynik_tekst), "Pierwsze %d znakow tekst1 jest większe od tekst2\n", n);
     }
     else {
-        snprintf(wynik_tekst, sizeof(wynik_tekst), "Pierwsze %d znaków tekst1 jest mniejsze od tekst2\n", n);
+        snprintf(wynik_tekst, sizeof(wynik_tekst), "Pierwsze %d znakow tekst1 jest mniejsze od tekst2\n", n);
     }
 
 
     printf("%s", make_polish(wynik_tekst));
 
-    
+
     zapisz_wynik(plik_wynikowy, make_polish(wynik_tekst));
 
     free(tekst1);
     free(tekst2);
- 
+
 
     return 0;
 }
+
